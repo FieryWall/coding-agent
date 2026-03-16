@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: coding_agent
+Version: 0.1.43
+Summary: Coding Agent
+Requires-Dist: openai
+Requires-Dist: langsmith
+Requires-Dist: python-dotenv
+Requires-Dist: lancedb
+Requires-Dist: pyarrow
+Requires-Dist: tree-sitter
+Requires-Dist: tree-sitter-javascript
+Requires-Dist: tree-sitter-python
+Requires-Dist: sentence-transformers
+Requires-Dist: tiktoken

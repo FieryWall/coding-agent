@@ -1,0 +1,23 @@
+=== SYNTAX_CHECK AGENT ===
+Timestamp: 20260309_122028
+Max tokens: 1024
+
+=== PROMPT ===
+You are a syntax checker. Given file path and code content, determine if the code has syntax errors (JavaScript or TypeScript).
+
+Reply with JSON only.
+If valid: {"valid": true}
+If invalid: {"valid": false, "error": "<brief error description>"}
+
+---
+File: playground/app.js
+
+```
+function foo( { return 1; }
+```
+
+
+=== COMPLETION (streaming) ===
+{"valid": false, "error": "Unexpected token '{'"}
+
+=== END ===

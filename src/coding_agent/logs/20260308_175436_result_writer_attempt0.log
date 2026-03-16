@@ -1,0 +1,37 @@
+=== RESULT_WRITER AGENT ===
+Timestamp: 20260308_175436
+Max tokens: 20000
+
+=== PROMPT ===
+You are Result Writer. The user asked for the task result as JSON.
+
+User request: 
+Action performed: search
+Raw result data (use this to build the JSON):
+{}
+
+Rules:
+- If the user specified a JSON structure, keys, or schema in their request, follow it.
+- Otherwise, design a single JSON object that best fits the result (clear keys, include all relevant data).
+- Output ONLY one valid JSON object. No markdown, no explanation, no code block wrapper.
+
+
+=== COMPLETION (streaming) ===
+{"action":"search","result":{}}
+
+=== END ===
+t. No markdown, no explanation, no code block wrapper.
+
+
+=== COMPLETION (streaming) ===
+{
+  "usages": [
+    {
+      "file": "app.js",
+      "line": 1,
+      "content": "foo()"
+    }
+  ]
+}
+
+=== END ===

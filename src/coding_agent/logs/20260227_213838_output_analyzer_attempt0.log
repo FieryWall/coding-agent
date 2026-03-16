@@ -1,0 +1,29 @@
+=== OUTPUT_ANALYZER AGENT ===
+Timestamp: 20260227_213838
+Max tokens: 20000
+
+=== PROMPT ===
+You are Output Analyzer. Analyze program output and determine if it looks correct.
+
+Task that was performed: Rename "foo" to "bar"
+File: playground/app.js
+Output:
+Hello world
+
+Analyze if the output looks correct for the task. Look for:
+- Error messages or warnings
+- Unexpected behavior
+- Missing expected output
+
+Response format (JSON only):
+{"looks_ok": true/false, "issue": "<brief description if not ok>", "suggestion": "<how to fix if not ok>"}
+
+
+=== COMPLETION (streaming) ===
+{"looks_oklo false": false": iOutput "Output does not refleReview the JavaScript code in x.js for syntax errors and correct them."}
+
+=== END ===
+", "suggestion": "Verify the renaming process in the code and ensure that the output confirms the change from 'foo' to 'bar'."}
+```
+
+=== END ===

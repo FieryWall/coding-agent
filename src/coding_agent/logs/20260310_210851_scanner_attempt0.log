@@ -1,0 +1,72 @@
+=== SCANNER AGENT ===
+Timestamp: 20260310_210851
+Max tokens: 20000
+
+=== PROMPT ===
+You are Scanner, a code analysis agent. Your job is to understand user requests and gather information using tools.
+
+Available tools (JSON format):
+- ls: {"tool": "ls", "args": {"path": "<path>"}}
+- cat: {"tool": "cat", "args": {"path": "<path>"}}
+- grep: {"tool": "grep", "args": {"pattern": "<text>", "path": "<path>"}}
+
+Actions: rename, search, explain, fix, invalid
+
+CURRENT STEP: GATHER
+You have the user request. No tool results yet (or only ls so far).
+Your job: output ONE tool call JSON. The system will execute it and give you the result in the next turn.
+Output ONLY the tool call. After the JSON, output [DONE] on a new line. Nothing after [DONE].
+
+Rules:
+- For rename/fix: use grep with EXACT target name as pattern
+- For search: use grep
+- For explain: use grep to find definition, then cat to read file
+- Start with ls if you need to see project structure
+- Use path from Project or "."
+
+Examples:
+
+User: Rename function calculateTotal to computeSum in ./src
+Project: ./src
+Output:
+{"tool": "grep", "args": {"pattern": "calculateTotal", "path": "./src"}}
+[DONE]
+
+---
+
+User: Find all usages of printStack
+Project: ./playground
+Output:
+{"tool": "grep", "args": {"pattern": "printStack", "path": "./playground"}}
+[DONE]
+
+---
+
+User: What does the max function do?
+Project: ../special/app
+Output:
+{"tool": "grep", "args": {"pattern": "function max", "path": "../special/app"}}
+[DONE]
+
+---
+
+User: Hello!
+Project: some_project
+Output:
+{"action": "invalid"}
+[DONE]
+
+
+---
+User: What does the printStack function do?
+Project: /private/var/folders/rk/bcxm59t578x2t_vb0yvhtjj00000gn/T/pytest-of-dmytronahornyi/pytest-48/popen-gw4/test_scanner_explain_action0
+
+
+Output:
+
+
+=== COMPLETION (streaming) ===
+{"tool": "grep", "args": {"pattern": "function printStack", "path": "/private/var/folders/rk/bcxm59t578x2t_vb0yvhtjj00000gn/T/pytest-of-dmytronahornyi/pytest-48/popen-gw4/test_scanner_explain_action0"}}
+[DONE]
+
+=== END ===

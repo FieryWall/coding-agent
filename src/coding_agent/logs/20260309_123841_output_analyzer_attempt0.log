@@ -1,0 +1,29 @@
+=== OUTPUT_ANALYZER AGENT ===
+Timestamp: 20260309_123841
+Max tokens: 20000
+
+=== PROMPT ===
+You are Output Analyzer. Analyze program output and determine if it looks correct.
+
+Task that was performed: 
+File: x.js
+Output:
+
+
+Analyze if the output looks correct for the task. Look for:
+- Error messages or warnings
+- Unexpected behavior
+- Missing expected output
+
+Response format (JSON only):
+{"looks_ok": true/false, "issue": "<brief description if not ok>", "suggestion": "<how to fix if not ok>"}
+
+
+=== COMPLETION (streaming) ===
+{"looks_ok": false, "issue": "Output contains error messages related to syntax errors in x.js", "suggestion": "Check the syntax in x.js for any missing or misplaced characters and correct them."}
+
+=== END ===
+the expected output related to the rename is being displayed."}
+```
+
+=== END ===

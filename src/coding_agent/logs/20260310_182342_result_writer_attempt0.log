@@ -1,0 +1,26 @@
+=== RESULT_WRITER AGENT ===
+Timestamp: 20260310_182342
+Max tokens: 20000
+
+=== PROMPT ===
+You are Result Writer. The user asked for the task result as JSON.
+
+User request: find bar
+Action performed: search
+Raw result data (use this to build the JSON):
+{
+  "matches": [],
+  "total": 0
+}
+
+Rules:
+- If the user specified a JSON structure, keys, or schema in their request, follow it exactly.
+- Otherwise, use this default structure:
+  {"request": "<user request>", "action": "<action>", "result": <raw result data>}
+- Output ONLY one valid JSON object. No markdown, no explanation, no code block wrapper.
+
+
+=== COMPLETION (streaming) ===
+{"request":"find bar","action":"search","result":{"matches":[],"total":0}}
+
+=== END ===

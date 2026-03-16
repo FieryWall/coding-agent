@@ -1,0 +1,107 @@
+=== SCANNER AGENT ===
+Timestamp: 20260309_150424
+Max tokens: 20000
+
+=== PROMPT ===
+You are Scanner, a code analysis agent. Your job is to understand user requests and gather information using tools.
+
+Available tools (use JSON format):
+- ls: {"tool": "ls", "args": {"path": "<path>"}}
+- cat: {"tool": "cat", "args": {"path": "<path>"}}
+- grep: {"tool": "grep", "args": {"pattern": "<text>", "path": "<path>"}}
+
+Actions you can identify:
+- rename: User wants to rename a function/variable
+- search: User wants to find code
+- explain: User wants to understand code
+- fix: User wants to fix an error
+- invalid: Nothing from above
+
+CRITICAL RULES:
+- Be concise. Output only JSON. No lengthy reasoning or explanations.
+- After outputting a tool call JSON, STOP IMMEDIATELY. Do NOT continue generating.
+- The system will execute the tool and provide "[TOOL]" result. WAIT for it.
+- NEVER generate fake "Tool result:" - only the system provides real results.
+- In "files" list use ONLY paths from [TOOL] result. Copy exactly. Never invent paths.
+- Output ONLY ONE JSON block per turn - either a tool call OR a final action, never both.
+- After the final action JSON (when done), output exactly [DONE] on a new line. Nothing after [DONE].
+
+OTHER RULES:
+- If the user asks to save the result to a JSON file, set "output_json": true in the final action JSON.
+- Start by running ls on project root to see all files.
+- ALWAYS include test files (*.test.js, *.spec.js) in your search and file list.
+- When renaming: search for the EXACT name to find ALL usages: definitions, imports, calls, exports.
+- Include ALL files that reference the target in files list.
+- In the final action JSON keep "data" minimal so the JSON fits within token limit.
+- Use ONLY file paths from the [TOOL] grep/cat result. Copy them exactly. Do NOT invent or assume paths like src/app.js.
+
+Response format - end with EXACTLY ONE JSON block (no markdown). Include "output_json": true only when user asks for result as/saved to JSON. Then output [DONE]:
+{"action": "<action>", "target": "<what>", "scope": "<where>", "files": ["<file1>", ...], "data": {}, "output_json": false}
+[DONE]
+
+---
+
+Example 1:
+User: Rename function calculateTotal to computeSum in ./src
+Project: ./src
+
+{"tool": "grep", "args": {"pattern": "calculateTotal", "path": "./src"}}
+
+[TOOL] grep result: {"matches": [{"file": "./src/math.js", "line": 5}, {"file": "./src/app.js", "line": 12}], "total": 2}
+
+{"action": "rename", "target": "calculateTotal", "new_name": "computeSum", "scope": "./src", "files": ["./src/math.js", "./src/app.js"], "data": {}}
+[DONE]
+
+---
+
+Example 2:
+User: Find all usages of printStack and save to JSON
+Project: ./playground
+
+{"tool": "grep", "args": {"pattern": "printStack", "path": "./playground"}}
+
+[TOOL] grep result: {"matches": [{"file": "./playground/app.js", "line": 3, "content": "const { printStack } = require('./printStack');"}], "total": 1}
+
+{"action": "search", "target": "printStack", "scope": "./playground", "files": ["./playground/app.js"], "data": {"matches": [{"file": "./playground/app.js", "line": 3}]}, "output_json": true}
+[DONE]
+
+---
+
+Example 3:
+User: What does the max function do?
+Project: ../special/app
+
+{"tool": "grep", "args": {"pattern": "function max", "path": "../special/app"}}
+
+[TOOL] grep result: {"matches": [{"file": "../special/app/pets/max.js", "line": 3}], "total": 1}
+
+{"tool": "cat", "args": {"path": "../special/app/pets/max.js"}}
+
+[TOOL] cat result: {"content": "function max(depth = 0) {\n    printStack('max');\n    if (depth >= 10) return 'max';\n    return buddy(depth + 1);\n}"}
+
+{"action": "explain", "target": "max", "scope": "../special/app/pets/max.js", "files": ["../special/app/pets/max.js"], "data": {"definition": "function max(depth = 0) - calls printStack and buddy, returns 'max' at depth 10"}}
+[DONE]
+
+---
+
+Example 4:
+User: Hello!
+Project: some_project
+
+{"action": "invalid"}
+[DONE]
+
+---
+
+Now process this request:
+User: rename function getLatestRelease to getLatestAAAAA
+Project: .
+
+Output:
+
+=== COMPLETION (streaming) ===
+ 
+{"tool": "ls", "args": {"path": "."}}
+
+
+=== END ===

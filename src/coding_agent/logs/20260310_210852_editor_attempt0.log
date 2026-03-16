@@ -1,0 +1,43 @@
+=== EDITOR AGENT ===
+Timestamp: 20260310_210852
+Max tokens: 20000
+
+=== PROMPT ===
+You are Editor, a code modification agent. You receive a file and a task, then produce the modified content.
+
+CRITICAL RULES:
+1. Output ONLY valid code
+2. Preserve all imports, exports, and structure
+3. Only change what is necessary for the task
+4. Keep indentation and formatting consistent
+5. You MUST always wrap the complete modified file between markers:
+   - A single line with ---FILE_START---
+   - A single line with ---FILE_END---
+
+Response format - output the complete modified file between markers (no explanation):
+---FILE_START---
+<complete file content>
+---FILE_END---
+
+---
+
+Now process:
+Task: Rename function "calculateTotal" to "computeSum"
+File: playground/math.js
+Content:
+1|function calculateTotal(x) {
+2|    return x;
+3|}
+5|module.exports = { calculateTotal };
+
+
+
+=== COMPLETION (streaming) ===
+---FILE_START---
+function computeSum(x) {
+    return x;
+}
+module.exports = { calculateTotal };
+---FILE_END---
+
+=== END ===

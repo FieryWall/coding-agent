@@ -1,0 +1,137 @@
+=== EDITOR AGENT ===
+Timestamp: 20260313_162651
+Max tokens: 20000
+
+=== PROMPT ===
+You are Editor, a code modification agent. You receive a file and a task, then produce the modified content.
+
+CRITICAL RULES:
+1. Output ONLY valid code
+2. Preserve all imports, exports, and structure
+3. Only change what is necessary for the task
+4. Keep indentation and formatting consistent
+5. You MUST always wrap the complete modified file between markers:
+   - A single line with ---FILE_START---
+   - A single line with ---FILE_END---
+
+Response format - output the complete modified file between markers (no explanation):
+---FILE_START---
+<complete file content>
+---FILE_END---
+
+---
+
+Now process:
+Task: Add a function getDepthLimit() that returns MAX_DEPTH. Export it alongside MAX_DEPTH.
+File: config.js
+Content:
+const MAX_DEPTH = 10;
+
+module.exports = { MAX_DEPTH };
+
+
+
+
+=== COMPLETION (streaming) ===
+---FILE_START---
+const MAX_DEPTH = 10;
+
+function getDepthLimit() {
+    return MAX_DEPTH;
+}
+
+module.exports = { MAX_DEPTH, getDepthLimit };
+---FILE_END---
+
+=== END ===
+ {
+        if (depth >= 10) return 'luna';
+        return 'done';
+    }
+
+    getName() {
+        return 'luna';
+    }
+}
+
+const luna = (depth) => new Luna().call(depth);
+
+module.exports = { luna, Luna };
+---FILE_END---
+
+=== END ===
+{ calculateTotal };
+```
+
+{"changes": [{"original": "function calculateTotal(items) {", "new_content": "function computeSum(items) {"}, {"original": "module.exports = { calculateTotal };", "new_content": "module.exports = { computeSum };"}]}
+
+---
+
+Example 2:
+Task: Rename function "calculateTotal" to "computeSum"
+File: ./src/app.js
+Chunks:
+[variable] import
+```
+const { calculateTotal } = require('./math');
+```
+
+[function] checkout
+```
+function checkout(cart) {
+    const total = calculateTotal(cart);
+    return { total, items: cart.length };
+}
+```
+
+{"changes": [{"original": "const { calculateTotal } = require('./math');", "new_content": "const { computeSum } = require('./math');"}, {"original": "const total = calculateTotal(cart);", "new_content": "const total = computeSum(cart);"}]}
+
+---
+
+Example 3 (multi-line change):
+Task: Fix syntax error in function
+File: ./src/util.js
+Previous error: Missing closing brace
+Chunks:
+[function] getData
+```
+function getData() {
+    return {
+        value: 42
+}
+```
+
+{"changes": [{"original": "function getData() {\n    return {\n        value: 42\n}", "new_content": "function getData() {\n    return {\n        value: 42\n    };\n}"}]}
+
+---
+
+Now process:
+Task: Rename function/variable "max" to "min"
+Rename ONLY identifiers named exactly "max" (function declarations, calls, imports, exports)
+DO NOT rename: constants, strings, comments, or similar names like "MAX" or "MAX_DEPTH"
+File: playground/pets/max.js
+Chunks:
+[variable] MAX_DEPTH
+```
+const MAX_DEPTH = 10;
+```
+
+[function] max
+```
+function max(depth = 0) {
+    if (depth >= MAX_DEPTH) return 'max';
+    return buddy(depth + 1);
+}
+```
+
+[variable] exports
+```
+module.exports = { max, MAX_DEPTH };
+```
+
+
+
+=== COMPLETION (streaming) ===
+{"changes":[{"original":"function max(depth = 0) {","new_content":"function min(depth = 0) {"},{"original":"module.exports = { max, MAX_DEPTH };","new_content":"module.exports = { min, MAX_DEPTH };"}]}
+
+=== END ===

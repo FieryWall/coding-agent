@@ -1,0 +1,60 @@
+=== EDITOR AGENT ===
+Timestamp: 20260313_172433
+Max tokens: 20000
+
+=== PROMPT ===
+You are Editor, a code modification agent. You receive a file and a task, then produce the modified content.
+
+CRITICAL RULES:
+1. Output ONLY valid code
+2. Preserve all imports, exports, and structure
+3. Only change what is necessary for the task
+4. Keep indentation and formatting consistent
+5. You MUST always wrap the complete modified file between markers:
+   - A single line with ---FILE_START---
+   - A single line with ---FILE_END---
+
+Response format - output the complete modified file between markers (no explanation):
+---FILE_START---
+<complete file content>
+---FILE_END---
+
+---
+
+Now process:
+Task: Add a getName() method to the Luna class that returns the string 'luna'
+File: luna.js
+Content:
+class Luna {
+    call(depth = 0) {
+        if (depth >= 10) return 'luna';
+        return 'done';
+    }
+}
+
+const luna = (depth) => new Luna().call(depth);
+
+module.exports = { luna, Luna };
+
+
+
+
+=== COMPLETION (streaming) ===
+---FILE_START---
+class Luna {
+    call(depth = 0) {
+        if (depth >= 10) return 'luna';
+        return 'done';
+    }
+
+    getName() {
+        return 'luna';
+    }
+}
+
+const luna = (depth) => new Luna().call(depth);
+
+module.exports = { luna, Luna };
+---FILE_END---
+
+=== END ===

@@ -1,0 +1,130 @@
+=== CHANGE_PLANNER AGENT ===
+Timestamp: 20260313_172424
+Max tokens: 20000
+
+=== PROMPT ===
+You are Change Planner. You analyze code and plan specific changes.
+
+Task: Add a function multiply(a, b) that returns a * b. Export it alongside add.
+File: math.js
+Target: "multiply"
+
+File content:
+```
+1|function add(a, b) {
+2|    return a + b;
+3|}
+4|
+5|module.exports = { add };
+
+```
+
+Your job:
+1. Read the task to determine the MODE:
+   - RENAME/FIX mode: task says "rename", "change", "fix", "update" an existing thing
+   - IMPLEMENT mode: task says "add", "implement", "create" new functionality
+
+2. RENAME/FIX mode:
+   - Find ALL occurrences of "multiply" in the file
+   - If target is not found at all: return {"changes": []} (empty — nothing to do)
+   - For each occurrence: decide change or skip
+   - "original" must be the EXACT text to find (strip line-number prefix like "5|")
+
+3. IMPLEMENT mode:
+   - Pick ONE anchor: the best insertion point (e.g. the module.exports line, or the closing brace of a class)
+   - "original": the exact anchor text from the file (strip line-number prefix like "5|")
+   - "instruction": describe exactly what new code to add relative to the anchor, and any update needed to the anchor itself
+   - skip: false
+
+RULES for RENAME/FIX occurrences:
+- For identifiers (variables, functions, imports, exports): change them (skip=false)
+- For strings, comments, or similar but different names (like MAX_DEPTH vs max): mark as skip=true
+
+OUTPUT FORMAT (JSON only, no markdown, no explanations):
+{"changes": [{"original": "exact text", "instruction": "what to do", "skip": false}]}
+
+---
+
+Example 1 (rename):
+Task: Rename function "max" to "min"
+File: ./app.js
+Target: "max"
+File content:
+```
+1|const { max } = require('./pets/max');
+2|console.log('max is the best');
+3|max();
+```
+
+{"changes": [{"original": "const { max } = require('./pets/max');", "instruction": "rename import 'max' to 'min' and path to './pets/min'", "skip": false}, {"original": "console.log('max is the best');", "instruction": "string literal - do not change", "skip": true}, {"original": "max();", "instruction": "rename function call 'max()' to 'min()'", "skip": false}]}
+
+---
+
+Example 2 (rename with same-name constant):
+Task: Rename function "max" to "min"
+File: ./utils.js
+Target: "max"
+File content:
+```
+1|const MAX_DEPTH = 10;
+2|function max(a, b) {
+3|    if (a >= MAX_DEPTH) return a;
+4|    return a > b ? a : b;
+5|}
+```
+
+{"changes": [{"original": "const MAX_DEPTH = 10;", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}, {"original": "function max(a, b) {", "instruction": "rename function declaration 'max' to 'min'", "skip": false}, {"original": "if (a >= MAX_DEPTH)", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}]}
+
+---
+
+Example 3 (implement new function):
+Task: Add a function multiply(a, b) that returns a * b. Export it alongside add.
+File: math.js
+Target: "multiply"
+File content:
+```
+1|function add(a, b) {
+2|    return a + b;
+3|}
+4|
+5|module.exports = { add };
+```
+
+{"changes": [{"original": "module.exports = { add };", "instruction": "Add 'function multiply(a, b) { return a * b; }' before this line, then update exports to 'module.exports = { add, multiply };'", "skip": false}]}
+
+---
+
+Example 4 (implement class method):
+Task: Add a getName() method to the Luna class that returns the string 'luna'
+File: luna.js
+Target: "getName"
+File content:
+```
+1|class Luna {
+2|    call(depth = 0) {
+3|        if (depth >= 10) return 'luna';
+4|        return 'done';
+5|    }
+6|}
+```
+
+{"changes": [{"original": "    }\n}", "instruction": "After the closing brace of call(), add '    getName() { return \\'luna\\'; }' before the class closing brace", "skip": false}]}
+
+---
+
+Output JSON only:
+
+
+
+=== COMPLETION (streami": []}
+
+=== END ===
+{"original":"module.exports = { add };","instruction":"Add 'function multiply(a, b) { return a * b; }' before this line, then update exports to 'module.exports = { add, multiply };'","skip":false}]}
+
+=== END ===
+'max is the best');","instruction":"string literal - do not change","skip":true},{"original":"max();","instinstruc":"renare function call 'max()' to 'min()'","skip":false},{"original":"module.exports = { max, MAX_DEPTH };","instruction":"update exports to 'module.exp.exp = { min, MAX_DEPTH };' after renaming","skip":false}]}
+
+=== END ===
+"skip":false}]}
+
+=== END ===

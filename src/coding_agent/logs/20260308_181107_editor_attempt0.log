@@ -1,0 +1,225 @@
+=== EDITOR AGENT ===
+Timestamp: 20260308_181107
+Max tokens: 20000
+
+=== PROMPT ===
+You are Editor, a code modification agent. You receive code chunks with their line coordinates and produce targeted changes.
+
+CRITICAL RULES:
+1. Output ONLY the changes needed, not the entire file
+2. Each change must specify exact line coordinates (start_line, end_line)
+3. The content replaces lines from start_line to end_line (inclusive)
+4. Keep changes minimal - only modify what's necessary
+5. Preserve indentation and formatting
+
+INPUT FORMAT:
+You receive chunks from the file with format:
+[Lines X-Y] chunk_type: name
+```
+code content
+```
+
+OUTPUT FORMAT (JSON only, no markdown):
+{"changes": [{"start_line": X, "end_line": Y, "content": "new code"}]}
+
+IMPORTANT:
+- start_line and end_line are 1-indexed
+- end_line is inclusive (the line at end_line gets replaced too)
+- If adding new lines, set start_line = end_line = line where to insert
+- Sort doesn't matter, system applies changes from bottom to top
+- content should NOT have trailing newline (system adds it)
+
+---
+
+Example 1:
+Task: Rename function "calculateTotal" to "computeSum"
+File: ./src/math.js
+Chunks:
+[Lines 1-7] function: calculateTotal
+```
+function calculateTotal(items) {
+    let sum = 0;
+    for (const item of items) {
+        sum += item.price;
+    }
+    return sum;
+}
+```
+
+[Lines 9-9] variable: exports
+```
+module.exports = { calculateTotal };
+```
+
+Renaming function declaration and export.
+{"changes": [{"start_line": 1, "end_line": 1, "content": "function computeSum(items) {"}, {"start_line": 9, "end_line": 9, "content": "module.exports = { computeSum };"}]}
+
+---
+
+Example 2:
+Task: Rename function "calculateTotal" to "computeSum"
+File: ./src/app.js
+Chunks:
+[Lines 1-1] variable: import
+```
+const { calculateTotal } = require('./math');
+```
+
+[Lines 3-6] function: checkout
+```
+function checkout(cart) {
+    const total = calculateTotal(cart);
+    return { total, items: cart.length };
+}
+```
+
+Renaming import and function call.
+{"changes": [{"start_line": 1, "end_line": 1, "content": "const { computeSum } = require('./math');"}, {"start_line": 4, "end_line": 4, "content": "    const total = computeSum(cart);"}]}
+
+---
+
+Example 3 (with previous error):
+Task: Fix syntax error in function
+File: ./src/util.js
+Previous error: Missing closing brace
+Chunks:
+[Lines 1-4] function: getData
+```
+function getData() {
+    return {
+        value: 42
+}
+```
+
+Fixing missing brace.
+{"changes": [{"start_line": 1, "end_line": 4, "content": "function getData() {\n    return {\n        value: 42\n    };\n}"}]}
+
+---
+
+Now process:
+Task: Rename "max" to "min"
+File: /Users/dmytronahornyi/Documents/dev/github/ai/agentic_ai/study_topics/6_error_handling_and_safety/practice_result/dima/playground/app.test.js
+Chunks:
+[Lines 3-3] variable
+```
+const { MAX_DEPTH } = require('./config');
+```
+
+[Lines 4-4] variable
+```
+const { max } = require('./pets/max');
+```
+
+[Lines 13-15] function
+```
+() => {
+    assert.strictEqual(MAX_DEPTH, 10);
+}
+```
+
+[Lines 17-26] function
+```
+() => {
+    let called = false;
+    const originalLog = console.log;
+    console.log = (msg) => {
+        if (typeof msg === 'string' && msg.includes('buddy')) called = true;
+    };
+    max(MAX_DEPTH - 2);
+    console.log = originalLog;
+    assert.ok(called, 'buddy should be called from max');
+}
+```
+
+[Lines 28-42] function
+```
+() => {
+    let mittensCalled = false;
+    let sparkyCalled = false;
+    const originalLog = console.log;
+    console.log = (msg) => {
+        if (typeof msg === 'string') {
+            if (msg.includes('mittens')) mittensCalled = true;
+            if (msg.includes('sparky')) sparkyCalled = true;
+        }
+    };
+    buddy(MAX_DEPTH - 3);
+    console.log = originalLog;
+    assert.ok(mittensCalled, 'mittens should be called from buddy');
+    assert.ok(sparkyCalled, 'sparky should be called from buddy');
+}
+```
+
+[Lines 29-29] variable: mittensCalled
+```
+let mittensCalled = false;
+```
+
+[Lines 32-37] function
+```
+(msg) => {
+        if (typeof msg === 'string') {
+            if (msg.includes('mittens')) mittensCalled = true;
+            if (msg.includes('sparky')) sparkyCalled = true;
+        }
+    }
+```
+
+[Lines 44-49] function
+```
+() => {
+    assert.strictEqual(whiskers(MAX_DEPTH), 'whiskers');
+    assert.strictEqual(mittens(MAX_DEPTH), 'mittens');
+    assert.strictEqual(buddy(MAX_DEPTH), 'buddy');
+    assert.strictEqual(max(MAX_DEPTH), 'max');
+}
+```
+
+[Lines 51-60] function
+```
+() => {
+    let called = false;
+    const originalLog = console.log;
+    console.log = (msg) => {
+        if (typeof msg === 'string' && msg.includes('daisy')) called = true;
+    };
+    milo(MAX_DEPTH - 2);
+    console.log = originalLog;
+    assert.ok(called, 'daisy should be called from milo');
+}
+```
+
+[Lines 78-92] function
+```
+() => {
+    let gingerCalled = false;
+    let daisyCalled = false;
+    const originalLog = console.log;
+    console.log = (msg) => {
+        if (typeof msg === 'string') {
+            if (msg.includes('ginger')) gingerCalled = true;
+            if (msg.includes('daisy')) daisyCalled = true;
+        }
+    };
+    coco(MAX_DEPTH - 3);
+    console.log = originalLog;
+    assert.ok(gingerCalled, 'ginger should be called from coco');
+    assert.ok(daisyCalled, 'daisy should be called from ginger (recursion)');
+}
+```
+
+[Lines 94-98] function
+```
+() => {
+    assert.strictEqual(coco(MAX_DEPTH), 'coco');
+    assert.strictEqual(ginger(MAX_DEPTH), 'ginger');
+    assert.strictEqual(daisy(MAX_DEPTH), 'daisy');
+}
+```
+
+
+
+=== COMPLETION (streaming) ===
+{"changes":[{"start_line":3,"end_line":3,"content":"const { MIN_DEPTH } = require('./config');"},{"start_line":4,"end_line":4,"content":"const { min } = require('./pets/max');"},{"start_line":17,"end_line":17,"content":"    min(MAX_DEPTH - 2);"},{"start_line":44,"end_line":44,"content":"    assert.strictEqual(min(MAX_DEPTH), 'max');"}]}
+
+=== END ===

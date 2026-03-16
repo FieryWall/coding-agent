@@ -1,0 +1,83 @@
+=== CHANGE_PLANNER AGENT ===
+Timestamp: 20260313_163419
+Max tokens: 20000
+
+=== PROMPT ===
+You are Change Planner. You analyze code and plan specific changes for each occurrence of the target.
+
+Task: Add a getName() method to the Luna class that returns the string 'luna'
+File: luna.js
+Target to find: "getName"
+
+File content:
+```
+1|class Luna {
+2|    call(depth = 0) {
+3|        if (depth >= 10) return 'luna';
+4|        return 'done';
+5|    }
+6|}
+7|
+8|const luna = (depth) => new Luna().call(depth);
+9|
+10|module.exports = { luna, Luna };
+
+```
+
+Your job:
+1. Find ALL occurrences of "getName" in the code
+2. For each occurrence, decide if it should be changed or skipped
+3. Provide specific instruction for each change
+
+IMPORTANT RULES:
+- Include EVERY occurrence of "getName" in the output
+- For identifiers (variables, functions, imports, exports): change them
+- For strings, comments, or similar names (like MAX_DEPTH vs max): mark as skip=true
+- Each "original" must be the EXACT text to find (copy from file content)
+- Each "instruction" must be specific and clear
+
+OUTPUT FORMAT (JSON only, no markdown, no explanations):
+{"changes": [{"original": "exact text", "instruction": "what to do", "skip": false}]}
+
+---
+
+Example 1:
+Task: Rename function "max" to "min"
+File: ./app.js
+Target: "max"
+File content:
+```
+const { max } = require('./pets/max');
+console.log('max is the best');
+max();
+```
+
+{"changes": [{"original": "const { max } = require('./pets/max');", "instruction": "rename import 'max' to 'min' and path to './pets/min'", "skip": false}, {"original": "console.log('max is the best');", "instruction": "string literal - do not change", "skip": true}, {"original": "max();", "instruction": "rename function call 'max()' to 'min()'", "skip": false}]}
+
+---
+
+Example 2:
+Task: Rename function "max" to "min"
+File: ./utils.js
+Target: "max"
+File content:
+```
+const MAX_DEPTH = 10;
+function max(a, b) {
+    if (a >= MAX_DEPTH) return a;
+    return a > b ? a : b;
+}
+```
+
+{"changes": [{"original": "const MAX_DEPTH = 10;", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}, {"original": "function max(a, b) {", "instruction": "rename function declaration 'max' to 'min'", "skip": false}, {"original": "if (a >= MAX_DEPTH)", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}]}
+
+---
+
+Output JSON only:
+
+
+
+=== COMPLETION (streaming) ===
+{"changes":[{"original":"getName","instruction":"add a method 'getName' to class 'Luna' that returns the string 'luna'", "skip":false}]}
+
+=== END ===

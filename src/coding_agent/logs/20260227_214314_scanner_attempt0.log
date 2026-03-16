@@ -1,0 +1,104 @@
+=== SCANNER AGENT ===
+Timestamp: 20260227_214314
+Max tokens: 20000
+
+=== PROMPT ===
+You are Scanner, a code analysis agent. Your job is to understand user requests and gather information using tools.
+
+Available tools (use JSON format):
+- ls: {"tool": "ls", "args": {"path": "<path>"}}
+- cat: {"tool": "cat", "args": {"path": "<path>"}}
+- grep: {"tool": "grep", "args": {"pattern": "<text>", "path": "<path>"}}
+
+Actions you can identify:
+- rename: User wants to rename a function/variable
+- search: User wants to find code
+- explain: User wants to understand code
+- fix: User wants to fix an error
+- invalid: Nothing from above
+
+IMPORTANT:
+- If the user asks to save the result to a JSON file, get the result as JSON, or write output to result.json, set "output_json": true in the final action JSON. Otherwise omit it or set false.
+- Start by running ls on project root to see all files
+- ALWAYS include test files (*.test.js, *.spec.js) in your search and file list
+- When renaming: search for the EXACT name (e.g. "rocky" not "function rocky") to find ALL usages: definitions, imports, calls, exports
+- Include ALL files that reference the target in files list
+- WAIT for actual tool results before proceeding - do NOT make up fake results
+- Output ONLY ONE JSON block - either a tool call OR a final action, never both
+- In the final action JSON keep "data" minimal (e.g. omit "occurrences" or list only file paths) so the JSON fits within token limit
+
+Response format - end with EXACTLY ONE JSON block (no markdown). Include "output_json": true only when user asks for result as/saved to JSON:
+{"action": "<action>", "target": "<what>", "scope": "<where>", "files": ["<file1>", ...], "data": {}, "output_json": false}
+
+---
+
+Example 1:
+User: Rename function calculateTotal to computeSum in ./src
+Project: ./src
+
+Thinking: User wants to rename a function. I need to find all occurrences.
+{"tool": "grep", "args": {"pattern": "calculateTotal", "path": "./src"}}
+
+Tool result: {"pattern": "calculateTotal", "matches": [{"file": "./src/math.js", "line": 5, "content": "function calculateTotal(items) {"}, {"file": "./src/app.js", "line": 12, "content": "const total = calculateTotal(cart);"}], "total": 2}
+
+Found 2 occurrences in 2 files. Preparing result.
+{"action": "rename", "target": "calculateTotal", "new_name": "computeSum", "scope": "./src", "files": ["./src/math.js", "./src/app.js"], "data": {"occurrences": [{"file": "./src/math.js", "line": 5}, {"file": "./src/app.js", "line": 12}]}}
+
+---
+
+Example 2:
+User: Find all usages of printStack and save to JSON
+Project: ./playground
+
+Thinking: User wants to search and save result as JSON. Set output_json true.
+{"tool": "grep", "args": {"pattern": "printStack", "path": "./playground"}}
+
+Tool result: {"pattern": "printStack", "matches": [{"file": "./playground/app.js", "line": 3, "content": "const { printStack } = require('./printStack');"}], "total": 1}
+
+Found 1 match.
+{"action": "search", "target": "printStack", "scope": "./playground", "files": ["./playground/app.js"], "data": {"matches": [{"file": "./playground/app.js", "line": 3, "content": "const { printStack } = require('./printStack');"}]}, "output_json": true}
+
+---
+
+Example 3:
+User: What does the max function do?
+Project: ../special/app
+
+Thinking: User wants explanation. Need to find and read the function.
+{"tool": "grep", "args": {"pattern": "function max", "path": "../special/app"}}
+
+Tool result: {"pattern": "function max", "matches": [{"file": "../special/app/pets/max.js", "line": 3, "content": "function max(depth = 0) {"}], "total": 1}
+
+Found definition. Reading file for context.
+{"tool": "cat", "args": {"path": "../special/app/pets/max.js"}}
+
+Tool result: {"path": "../special/app/pets/max.js", "content": "1|const { printStack } = require('../printStack');\n2|\n3|function max(depth = 0) {\n4|    printStack('max');\n5|    if (depth >= 10) return 'max';\n6|    return buddy(depth + 1);\n7|}\n8|\n9|module.exports = { max };", "total_lines": 9}
+
+{"action": "explain", "target": "max", "scope": "../special/app/pets/max.js", "files": ["../special/app/pets/max.js"], "data": {"definition": "function max(depth = 0) - calls printStack and buddy with depth tracking, returns 'max' at depth 10"}}
+
+---
+
+Example 4:
+User: Hello!
+Project: some_project
+
+Thinking: User does a small talk. Invalid request.
+
+{"action": "invalid"}
+
+---
+
+Now process this request:
+User: Rename function A to B
+Project: playground
+
+Thinking:{"tool": "grep", "args": {"pattern": "A", "path": "playground"}}
+
+Tool result: {'pattern': 'A', 'matches': [{'file': 'playground/config.js', 'line': 1, 'content': 'const MAX_DEPTH = 10;'}, {'file': 'playground/config.js', 'line': 3, 'content': 'module.exports = { MAX_DEPTH };'}, {'file': 'playground/app.test.js', 'line': 3, 'content': "const { MAX_DEPTH } = require('./config');"}, {'file': 'playground/app.test.js', 'line': 13, 'content': "test('MAX_DEPTH is 10', () => {"}, {'file': 'playground/app.test.js', 'line': 14, 'content': 'assert.strictEqual(MAX_DEPTH, 10);'}, {'file': 'playground/app.test.js', 'line': 23, 'content': 'max(MAX_DEPTH - 2);'}, {'file': 'playground/app.test.js', 'line': 38, 'content': 'buddy(MAX_DEPTH - 3);'}, {'file': 'playground/app.test.js', 'line': 45, 'content': "assert.strictEqual(whiskers(MAX_DEPTH), 'whiskers');"}, {'file': 'playground/app.test.js', 'line': 46, 'content': "assert.strictEqual(mittens(MAX_DEPTH), 'mittens');"}, {'file': 'playground/app.test.js', 'line': 47, 'content': "assert.strictEqual(buddy(MAX_DEPTH), 'buddy');"}, {'file': 'playground/app.test.js', 'line': 48, 'content': "assert.strictEqual(max(MAX_DEPTH), 'max');"}, {'file': 'playground/app.test.js', 'line': 57, 'content': 'milo(MAX_DEPTH - 2);'}, {'file': 'playground/app.test.js', 'line': 72, 'content': 'daisy(MAX_DEPTH - 3);'}, {'file': 'playground/app.test.js', 'line': 88, 'content': 'coco(MAX_DEPTH - 3);'}, {'file': 'playground/app.test.js', 'line': 95, 'content': "assert.strictEqual(coco(MAX_DEPTH), 'coco');"}, {'file': 'playground/app.test.js', 'line': 96, 'content': "assert.strictEqual(ginger(MAX_DEPTH), 'ginger');"}, {'file': 'playground/app.test.js', 'line': 97, 'content': "assert.strictEqual(daisy(MAX_DEPTH), 'daisy');"}, {'file': 'playground/app.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('./config');"}, {'file': 'playground/app.js', 'line': 16, 'content': "console.log('CHAIN 1: max > buddy > mittens > whiskers');"}, {'file': 'playground/app.js', 'line': 22, 'content': "console.log('CHAIN 2: milo > daisy > luna'); // Removed izabella reference"}, {'file': 'playground/app.js', 'line': 32, 'content': 'MAX_DEPTH'}, {'file': 'playground/pets/milo.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/milo.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'milo';"}, {'file': 'playground/pets/sparky.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/sparky.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'sparky';"}, {'file': 'playground/pets/rocky.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/rocky.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'rocky';"}, {'file': 'playground/pets/max.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/max.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'max';"}, {'file': 'playground/pets/bella.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/bella.js', 'line': 6, 'content': "if (depth >= MAX_DEPTH) return 'izabella';"}, {'file': 'playground/pets/daisy.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/daisy.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'daisy';"}, {'file': 'playground/pets/coco.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/coco.js', 'line': 7, 'content': "if (depth >= MAX_DEPTH) return 'coco';"}, {'file': 'playground/pets/mittens.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/mittens.js', 'line': 8, 'content': "if (depth >= MAX_DEPTH) return 'mittens';"}, {'file': 'playground/pets/buddy.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/buddy.js', 'line': 8, 'content': "if (depth >= MAX_DEPTH) return 'buddy';"}, {'file': 'playground/pets/ginger.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/ginger.js', 'line': 6, 'content': "if (depth >= MAX_DEPTH) return 'ginger';"}, {'file': 'playground/pets/luna.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/luna.js', 'line': 8, 'content': "if (depth >= MAX_DEPTH) return 'luna';"}, {'file': 'playground/pets/whiskers.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/whiskers.js', 'line': 6, 'content': "if (depth >= MAX_DEPTH) return 'whiskers';"}, {'file': 'playground/pets/charlie.js', 'line': 1, 'content': "const { MAX_DEPTH } = require('../config');"}, {'file': 'playground/pets/charlie.js', 'line': 6, 'content': "if (depth >= MAX_DEPTH) return 'charlie';"}], 'total': 47}
+
+Thinking:
+
+=== COMPLETION (streaming) ===
+{"action": "rename", "target": "A", "new_name": "B", "scope": "playground", "files": ["playground/config.js", "playground/app.test.js", "playground/app.js", "playground/pets/milo.js", "playground/pets/sparky.js", "playground/pets/rocky.js", "playground/pets/max.js", "playground/pets/bella.js", "playground/pets/daisy.js", "playground/pets/coco.js", "playground/pets/mittens.js", "playground/pets/buddy.js", "playground/pets/ginger.js", "playground/pets/luna.js", "playground/pets/whiskers.js", "playground/pets/charlie.js"], "data": {"occurrences": ["playground/config.js:1", "playground/config.js:3", "playground/app.test.js:3", "playground/app.test.js:13", "playground/app.test.js:23", "playground/app.test.js:38", "playground/app.test.js:45", "playground/app.test.js:46", "playground/app.test.js:47", "playground/app.test.js:48", "playground/app.test.js:57", "playground/app.test.js:72", "playground/app.test.js:88", "playground/app.test.js:95", "playground/app.test.js:96", "playground/app.test.js:97", "playground/app.js:1", "playground/app.js:16", "playground/pets/milo.js:1", "playground/pets/milo.js:7", "playground/pets/sparky.js:1", "playground/pets/sparky.js:7", "playground/pets/rocky.js:1", "playground/pets/rocky.js:7", "playground/pets/max.js:1", "playground/pets/max.js:7", "playground/pets/bella.js:1", "playground/pets/bella.js:6", "playground/pets/daisy.js:1", "playground/pets/daisy.js:7", "playground/pets/coco.js:1", "playground/pets/coco.js:7", "playground/pets/mittens.js:1", "playground/pets/mittens.js:8", "playground/pets/buddy.js:1", "playground/pets/buddy.js:8", "playground/pets/ginger.js:1", "playground/pets/ginger.js:6", "playground/pets/luna.js:1", "playground/pets/luna.js:8", "playground/pets/whiskers.js:1", "playground/pets/whiskers.js:6", "playground/pets/charlie.js:1", "playground/pets/charlie.js:6"]}}
+
+=== END ===

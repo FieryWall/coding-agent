@@ -1,0 +1,76 @@
+=== SCANNER AGENT ===
+Timestamp: 20260313_172433
+Max tokens: 20000
+
+=== PROMPT ===
+You are Scanner, a code analysis agent. Your job is to understand user requests and gather information using tools.
+
+Available tools (JSON format):
+- ls: {"tool": "ls", "args": {"path": "<path>"}}
+- cat: {"tool": "cat", "args": {"path": "<path>"}}
+- grep: {"tool": "grep", "args": {"pattern": "<text>", "path": "<path>"}}
+
+Actions: rename, search, explain, fix, implement, invalid
+
+CURRENT STEP: SYNTHESIZE
+You have tool results. Your job: output the final action JSON, OR a tool call if you need more data.
+If you need to read a file (e.g. for explain), output {"tool": "cat", "args": {"path": "<file>"}}.
+Otherwise output the action. Copy ALL file paths from the [TOOL] result into the "files" array. Do not omit any.
+Include output_json: true only if user asked for result saved to JSON.
+
+Rules:
+- "files" must contain EVERY file from the grep/cat matches
+- Copy paths exactly as in the result (e.g. ./src/app.js)
+- For rename: target=ORIGINAL name (what exists now), new_name=NEW name (from user request)
+- For explain: put brief definition in data.definition
+- For implement: target=name of the new function/method to add (does not exist yet), no new_name needed
+- End with [DONE] on a new line
+
+Examples:
+
+[TOOL] grep result: {"matches": [{"file": "./src/math.js", "line": 5}, {"file": "./src/app.js", "line": 12}], "total": 2}
+Output:
+{"action": "rename", "target": "calculateTotal", "new_name": "computeSum", "scope": "./src", "files": ["./src/math.js", "./src/app.js"], "data": {}}
+[DONE]
+
+---
+
+[TOOL] grep result: {"matches": [{"file": "./playground/app.js", "line": 3}], "total": 1}
+Output:
+{"action": "search", "target": "printStack", "scope": "./playground", "files": ["./playground/app.js"], "data": {"matches": [{"file": "./playground/app.js", "line": 3}]}, "output_json": false}
+[DONE]
+
+---
+
+[TOOL] cat result: {"content": "function max(depth = 0) { ... }"}
+Output:
+{"action": "explain", "target": "max", "scope": "../special/app/pets/max.js", "files": ["../special/app/pets/max.js"], "data": {"definition": "function max - recursive, returns 'max' at depth 10"}}
+[DONE]
+
+---
+
+[TOOL] cat result: {"content": "function add(a, b) {\n    return a + b;\n}\n\nmodule.exports = { add };\n"}
+User: Add a function multiply(a, b) that returns a * b to math.js
+Output:
+{"action": "implement", "target": "multiply", "files": ["./src/math.js"], "data": {}}
+[DONE]
+
+
+---
+User: Rename function max to maximum
+Project: /private/var/folders/rk/bcxm59t578x2t_vb0yvhtjj00000gn/T/pytest-of-dmytronahornyi/pytest-60/popen-gw8/test_scanner_pairwise0
+
+[TOOL] grep result: {'pattern': 'max', 'matches': [{'file': './app.js', 'line': 1, 'content': 'function max(depth) {'}, {'file': './app.js', 'line': 2, 'content': "return 'max';"}, {'file': './app.js', 'line': 4, 'content': 'module.exports = { max };'}], 'total': 3}
+
+
+Output:
+
+
+=== COMPLETION (streaming) ===
+{"action": "processData", "files": ["./broken.js" "madata": {}}
+[DONE]
+
+=== "files": ["./app.js"], "data": {}}
+[DONE]
+
+=== END ===

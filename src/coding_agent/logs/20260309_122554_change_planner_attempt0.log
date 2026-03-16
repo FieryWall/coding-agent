@@ -1,0 +1,106 @@
+=== CHANGE_PLANNER AGENT ===
+Timestamp: 20260309_122554
+Max tokens: 20000
+
+=== PROMPT ===
+You are Change Planner. You analyze code and plan specific changes for each occurrence of the target.
+
+Task: Rename "max" to "min"
+File: /Users/dmytronahornyi/Documents/dev/github/ai/agentic_ai/study_topics/6_error_handling_and_safety/practice_result/dima/playground/app.js
+Target to find: "max"
+
+File content:
+```
+1|const { MAX_DEPTH } = require('./config');
+2|const { max } = require('./pets/max');
+3|const { buddy } = require('./pets/buddy');
+4|const { mittens } = require('./pets/mittens');
+5|const { whiskers } = require('./pets/whiskers');
+6|const { sparky } = require('./pets/sparky');
+7|const { rocky } = require('./pets/rocky');
+8|const { charlie } = require('./pets/charlie');
+9|const { milo } = require('./pets/milo');
+10|const { daisy } = require('./pets/daisy');
+11|const { luna } = require('./pets/luna');
+12|const { bella } = require('./pets/bella');
+13|const { coco } = require('./pets/coco');
+14|const { ginger } = require('./pets/ginger');
+15|
+16|console.log('='.repeat(50));
+17|console.log('CHAIN 1: max > buddy > mittens > whiskers');
+18|console.log('         + branch: buddy > sparky > rocky > charlie');
+19|console.log('='.repeat(50));
+20|max();
+21|
+22|console.log('\n' + '='.repeat(50));
+23|console.log('CHAIN 2: milo > daisy > luna > bella');
+24|console.log('         + recursion: daisy > coco > ginger > daisy > ...');
+25|console.log('='.repeat(50));
+26|milo();
+27|
+28|module.exports = {
+29|    max, buddy, mittens, whiskers,
+30|    sparky, rocky, charlie,
+31|    milo, daisy, luna, bella,
+32|    coco, ginger,
+33|    MAX_DEPTH
+34|};
+```
+
+Your job:
+1. Find ALL occurrences of "max" in the code
+2. For each occurrence, decide if it should be changed or skipped
+3. Provide specific instruction for each change
+
+IMPORTANT RULES:
+- Include EVERY occurrence of "max" in the output
+- For identifiers (variables, functions, imports, exports): change them
+- For strings, comments, or similar names (like MAX_DEPTH vs max): mark as skip=true
+- Each "original" must be the EXACT text to find (copy from file content)
+- Each "instruction" must be specific and clear
+
+OUTPUT FORMAT (JSON only, no markdown):
+{"changes": [{"original": "exact text", "instruction": "what to do", "skip": false}]}
+
+---
+
+Example 1:
+Task: Rename function "max" to "min"
+File: ./app.js
+Target: "max"
+File content:
+```
+const { max } = require('./pets/max');
+console.log('max is the best');
+max();
+```
+
+{"changes": [{"original": "const { max } = require('./pets/max');", "instruction": "rename import 'max' to 'min' and path to './pets/min'", "skip": false}, {"original": "console.log('max is the best');", "instruction": "string literal - do not change", "skip": true}, {"original": "max();", "instruction": "rename function call 'max()' to 'min()'", "skip": false}]}
+
+---
+
+Example 2:
+Task: Rename function "max" to "min"
+File: ./utils.js
+Target: "max"
+File content:
+```
+const MAX_DEPTH = 10;
+function max(a, b) {
+    if (a >= MAX_DEPTH) return a;
+    return a > b ? a : b;
+}
+```
+
+{"changes": [{"original": "const MAX_DEPTH = 10;", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}, {"original": "function max(a, b) {", "instruction": "rename function declaration 'max' to 'min'", "skip": false}, {"original": "if (a >= MAX_DEPTH)", "instruction": "MAX_DEPTH is a different identifier - do not change", "skip": true}]}
+
+---
+
+Now analyze and plan changes:
+
+
+
+=== COMPLETION (streaming) ===
+{"changes":[{"original":"const { max } = require('./pets/max');","instruction":"rename import 'max' to 'min' and path to './pets/min'","skip":false},{"original":"console.log('CHAIN 1: max > buddy > mittens > whiskers');","instruction":"string literal - do not change","skip":true},{"original":"max();","instruction":"rename function call 'max()' to 'min()'","skip":false},{"original":"module.exports = {","instruction":"no changes needed here, just an export statement","skip":true},{"original":"    max, buddy, mittens, whiskers,","instruction":"rename export 'max' to 'min'","skip":false}]}
+
+=== END ===

@@ -1,0 +1,11 @@
+# Runtime (from src/coding_agent: llm.py, tools.py, …)
+openai
+langsmith
+python-dotenv
+llama-cpp-python
+mlx-lm
+
+# Dev / tests (from tests/: pytest, pydantic)
+pytest>=9.0.2
+pytest-asyncio
+pydantic
